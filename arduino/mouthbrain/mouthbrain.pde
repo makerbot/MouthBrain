@@ -7,6 +7,8 @@ byte analogPins[XDIM] = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15};
 
 void setup()
 {
+	Serial.begin(115200);
+	
 	for (byte i=0; i<XDIM; i++)
 	{
 		pinMode(anodePins[i], OUTPUT);
@@ -26,6 +28,12 @@ void setup()
 	}
 	
 	selftest();
+}
+
+void loop()
+{
+	frameIn();
+	frameOut();
 }
 
 void selftest()
@@ -69,7 +77,7 @@ void selftest()
 	}
 }
 
-void analogRead()
+void frameOut()
 {
 	Serial.println("[AFRAME]");
 	for (byte y=0; y<YDIM; y++)
@@ -90,7 +98,33 @@ void analogRead()
 	}
 }
 
-void streamFrame()
+void frameIn()
 {
+	String frame = "";
+	int b = 0;
+	int row = 0;
 	
+	if (Serial.available())
+	{
+		b = Serial.read();
+		frame += b;
+		
+		if (frame.equals("[FRAME]"))
+		{
+			for (byte y=0; y<YDIM; y++)
+			{
+				while(Serial.available() <= 1)
+					delay(1);
+				
+				row = word(Serial.read(), Serial.read());
+				
+				drawLine(y, row);
+			}
+		}
+	}
+}
+
+void drawLine()
+{
+
 }
