@@ -133,7 +133,7 @@ void drawPixels() {
       else if (y<GRID_HEIGHT && x<GRID_WIDTH) {
         //FRAME_BUFFER[y][x] = c;
         noStroke();
-        fill(250,247,57,255-c/2);
+        fill(250,247,57,255-c);
         rect(GRID_LEFT+x*TONGUE_PIXEL_SPACING,GRID_TOP+y*TONGUE_PIXEL_SPACING,TONGUE_PIXEL_SIZE,TONGUE_PIXEL_SIZE);
         //print(x+","+y+"="+c+" ");
       }
