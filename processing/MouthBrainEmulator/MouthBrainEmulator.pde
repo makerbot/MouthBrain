@@ -19,7 +19,7 @@ float TONGUE_WIDTH_IN = 2;
 float TONGUE_HEIGHT_IN = 2.5;
 int GRID_WIDTH = 16;
 int GRID_HEIGHT = 16;
-float DPI = 100;
+float DPI = 256;
 
 // CALCULATED CONSTANTS
 float BOARD_WIDTH = BOARD_WIDTH_IN * DPI;
@@ -82,7 +82,7 @@ void readData() {
 }
 
 void readFromClient(Client client) {
-//  println("SERVER: clientEvent");
+  //println("SERVER: clientEvent");
   int c = -1;
   int l = -1;
 
@@ -92,14 +92,15 @@ void readFromClient(Client client) {
     c = client.read();    
     COMM_BUFFER[COMM_BUFFER_OFFSET++] = c;
     
-//    print(c);
-//    print(" ");
+    //println("COMM_BUFFER[" + COMM_BUFFER_OFFSET + "]: " + c);
+
     if (l == 10 && c == 1) {
-//      println();
-//      println("SERVER: Frame end");
+      //println();
+      //println("SERVER: Frame end");
       drawFrame();
       COMM_BUFFER_OFFSET = 0;
     }
+    
   }
 //  println();
 //  println("Buffer is " + COMM_BUFFER_OFFSET);
@@ -115,11 +116,13 @@ void drawPixels() {
   int y;
   int x;
   int c;
-  int j=0;
+  int pix=0;
   
-  for (int i=0; i<COMM_BUFFER_OFFSET-2; i++,j++) {
-      y = j / GRID_WIDTH;
-      x = j % GRID_WIDTH;
+  //println(COMM_BUFFER.length);
+  //println(COMM_BUFFER_OFFSET); 
+  for (int i=0; i<COMM_BUFFER_OFFSET-2; i++,pix++) {
+      y = pix / GRID_HEIGHT;
+      x = pix % GRID_WIDTH;
       c = COMM_BUFFER[i];
       
       if (c == 10) {
@@ -130,7 +133,7 @@ void drawPixels() {
       else if (y<GRID_HEIGHT && x<GRID_WIDTH) {
         //FRAME_BUFFER[y][x] = c;
         noStroke();
-        fill(250,247,57,c);
+        fill(250,247,57,255-c/2);
         rect(GRID_LEFT+x*TONGUE_PIXEL_SPACING,GRID_TOP+y*TONGUE_PIXEL_SPACING,TONGUE_PIXEL_SIZE,TONGUE_PIXEL_SIZE);
         //print(x+","+y+"="+c+" ");
       }
