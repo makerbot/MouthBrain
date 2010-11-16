@@ -16,6 +16,9 @@ PFont ubuntu14;
 color low = color(0, 0, 255);
 color high = color(255, 0, 0);
 
+String outputModes[] = {"blank", "random", "image", "webcam"};
+String outputMode = "random";
+
 void setup()
 {
   frameRate(30);
@@ -27,30 +30,16 @@ void setup()
   textFont(ubuntu14);
   textMode(SCREEN);
 
-  for (int x=0; x<gridOut.length; x++)
-  {
-    for (int y=0; y<gridOut[x].length; y++)
-    {
-      gridOut[x][y] = 0;
-      gridOut[x][y] = int(random(0, 255));
-    }
-  }
-
-  for (int x=0; x<gridIn.length; x++)
-  {
-    for (int y=0; y<gridIn[x].length; y++)
-    {
-      gridIn[x][y] = 0;
-      gridIn[x][y] = int(random(0, 255));
-    }
-  }
-
   size(w, h);
 }
 
 void draw()
 {
   background(175);
+  
+  drawOutputModes();
+
+  gridOut = generateOutputFrame();
 
   fill(0);
   text("INPUT GRID", gridInXPos-1, gridInYPos-pixelSize);
@@ -59,6 +48,27 @@ void draw()
   fill(0);
   text("OUTPUT GRID", gridOutXPos-1, gridOutYPos-pixelSize);
   drawGrid(gridOutXPos, gridOutYPos, gridOut);
+}
+
+void drawOutputModes()
+{
+  int startX = gridOutXPos-1;
+  int startY = gridOutYPos + pixelSize*gridHeight+15;
+
+  for (int i=0; i<outputModes.length; i++)
+  {
+    int realY = startY+i*30;
+    stroke(0);
+    if (outputMode == outputModes[i])
+      fill(200);
+    else
+      fill(255);
+      
+    rect(startX, realY, pixelSize*gridWidth+2, 20);
+    
+    fill(0);
+    text(outputModes[i], startX+5, realY+15);
+  }
 }
 
 void drawGrid(int x, int y, int[][] data)
@@ -86,4 +96,58 @@ void drawGrid(int x, int y, int[][] data)
 color getColorFromValue(int v)
 {
    return 255-v; 
+}
+
+int[][] generateOutputFrame()
+{
+  if (outputMode == "random")
+    return generateRandomFrame();
+  else
+    return generateBlankFrame();
+}
+
+int[][] generateBlankFrame()
+{
+  int[][] pixelData = new int[gridWidth][gridHeight];
+  
+  for (int x=0; x<gridOut.length; x++)
+  {
+    for (int y=0; y<gridOut[x].length; y++)
+    {
+      pixelData[x][y] = 0;
+    }
+  }
+
+  for (int x=0; x<gridIn.length; x++)
+  {
+    for (int y=0; y<gridIn[x].length; y++)
+    {
+      pixelData[x][y] = 0;
+    }
+  }
+  
+  return pixelData;
+}
+
+int[][] generateRandomFrame()
+{
+  int[][] pixelData = new int[gridWidth][gridHeight];
+  
+  for (int x=0; x<gridOut.length; x++)
+  {
+    for (int y=0; y<gridOut[x].length; y++)
+    {
+      pixelData[x][y] = int(random(0, 255));
+    }
+  }
+
+  for (int x=0; x<gridIn.length; x++)
+  {
+    for (int y=0; y<gridIn[x].length; y++)
+    {
+      pixelData[x][y] = int(random(0, 255));
+    }
+  }
+  
+  return pixelData;
 }
