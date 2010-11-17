@@ -3,7 +3,7 @@ BrainLink LINK;
 void setup()
 {
   size(16, 16);
-  frameRate(5);
+  frameRate(10);
 
   LINK = new BrainLink(this);
 }
