@@ -2,21 +2,17 @@ import processing.net.*;
 import processing.serial.*;
 
 // CONSTANTS
-int COMM_MODE_SERIAL = 1;
-int COMM_MODE_NETWORK = 2;
-int COMM_MODE_PROXY = 3;
-
 int COMMAND_GET_VERSION = 1;
 int COMMAND_GET_CONFIG  = 2;
 int COMMAND_GET_INPUTS  = 3;
 int COMMAND_SEND_FRAME  = 4;
 
 // CONFIGURATION
-int COMM_MODE = COMM_MODE_NETWORK;
-int COMM_CONTROL_CHAR = 10;
-int SERIAL_PORT = 1;
-int SERIAL_RATE = 9600;
+int SERIAL_PORT = -1;  //-1 to list ports, non-negative to choose the port.
+int SERIAL_RATE = 115200;
 int NETWORK_PORT = 6683; // M-O-U-F
+
+// DISPLAY CONFIG
 float BOARD_WIDTH_IN = 1;
 float BOARD_HEIGHT_IN = 2;
 float TONGUE_WIDTH_IN = 2;
@@ -46,22 +42,26 @@ float GRID_LEFT = WINDOW_WIDTH/2-TONGUE_PIXEL_SPACING*8+TONGUE_PIXEL_SPACING/8;
 int[][] FRAME_BUFFER = new int[GRID_HEIGHT][GRID_WIDTH];
 Serial SERIAL;
 Server SERVER;
-int COMM_BUFFER_OFFSET = 0;
 TastePacket PACKET;
 
 void setup() {
   size(WINDOW_WIDTH,WINDOW_HEIGHT);
   background(0);
 
+  frameRate(10);
+
   initBuffer();
   initComms();
-
-  drawFrame();
 }
 
 void draw() {
   readData();
   drawFrame();
+
+  if (SERIAL_PORT >= 0)
+  {
+    sendFrame();
+  }
 }
 
 void initBuffer() {
@@ -73,13 +73,18 @@ void initBuffer() {
 }
 
 void initComms() {
-  if (COMM_MODE == COMM_MODE_NETWORK || COMM_MODE == COMM_MODE_PROXY) {
-    SERVER = new Server(this,NETWORK_PORT);
-    PACKET = new TastePacket(SERVER);
-  }
+  SERVER = new Server(this,NETWORK_PORT);
+  PACKET = new TastePacket(SERVER);
 
-  if (COMM_MODE == COMM_MODE_SERIAL || COMM_MODE == COMM_MODE_PROXY) {
+  if (SERIAL_PORT >= 0)
+  {
     SERIAL = new Serial(this, Serial.list()[SERIAL_PORT], SERIAL_RATE);
+  }
+  else
+  {
+    // List all the available serial ports:
+    println("Available Serial Ports:");
+    println(Serial.list());
   }
 }
 
@@ -146,6 +151,18 @@ void drawPixels() {
   }
 }
 
+void sendFrame() {
+  SERIAL.write("[FRAME]");
+
+  for (int y=0; y<GRID_HEIGHT; y++) {
+    for (int x=0; x<GRID_WIDTH; x++) {
+      SERIAL.write(FRAME_BUFFER[y][x]);
+    }
+
+    delay(10);
+  }
+}
+
 void drawBoard() {
   fill(123,204,69,200);
   stroke(72,120,40,200);
@@ -162,3 +179,4 @@ void drawTongue() {
   rect(TONGUE_LEFT,TONGUE_BASE_TOP,TONGUE_WIDTH,TONGUE_HEIGHT*3/4+2);
   arc(TONGUE_LEFT,TONGUE_TOP,TONGUE_WIDTH,TONGUE_HEIGHT/2,PI,TWO_PI);
 }
+
