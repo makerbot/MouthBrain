@@ -1,13 +1,17 @@
 import processing.net.*;
 
+int COMMAND_GET_VERSION  = 1;
+int COMMAND_GET_CONFIG   = 2;
+int COMMAND_GET_INPUTS   = 3;
+int COMMAND_GET_FRAME    = 4;
+int COMMAND_SEND_FRAME   = 5;
+int COMMAND_SEND_VERSION = 6;
+int COMMAND_SEND_CONFIG  = 7;
+int COMMAND_SEND_INPUTS  = 8;
+
 class BrainLink
 {
   Client CLIENT;
-
-  int COMMAND_GET_VERSION = 1;
-  int COMMAND_GET_CONFIG  = 2;
-  int COMMAND_GET_INPUTS  = 3;
-  int COMMAND_SEND_FRAME  = 4;
 
   BrainLink(PApplet applet)
   {
@@ -100,6 +104,12 @@ class TastePacket
     buffer[bufferIndex] = i;
     bufferIndex++;
   }
+  
+  void addData(String s)
+  {
+    for (int i=0; i<s.length(); i++)
+      addData((int)s.charAt(i));
+  }
 
   void transmit()
   {
@@ -110,8 +120,6 @@ class TastePacket
     client.write((byte)calculatedCRC);
     for (int i=0; i<bufferIndex; i++)
       client.write((byte)buffer[i]);
-      
-    reset();
   }
 
   void read() {
@@ -123,7 +131,7 @@ class TastePacket
       return;
     }
     
-    println("TP: Got new client with " + client.available() + " byte message.");
+    //println("TP: Got new client with " + client.available() + " byte message.");
     
     int c = -1;
     while(client.available() > 0)
@@ -151,7 +159,7 @@ class TastePacket
             state = STATE_SYNC;
             bufferIndex = 0;
             
-            println("TP: synced up!");
+            //println("TP: synced up!");
           }
         }
         //have we synced properly?  we're now looking for the command byte.
@@ -160,7 +168,7 @@ class TastePacket
           command = c;
           state = STATE_COMMAND;
           
-           println("TP: got command #" + command);
+           //println("TP: got command #" + command);
         }
         //have we received our command byte?  we're now looking for length data.
         else if (state == STATE_COMMAND)
@@ -179,7 +187,7 @@ class TastePacket
           }
 
           if (packetLength > bufferSize) {
-            println("TASTEPACKET: packet length of " + packetLength + " is too long.");
+            //println("TASTEPACKET: packet length of " + packetLength + " is too long.");
             reset();
           } 
           else {
