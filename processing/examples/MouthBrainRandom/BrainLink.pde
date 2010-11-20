@@ -11,21 +11,25 @@ int COMMAND_SEND_INPUTS  = 8;
 
 class BrainLink
 {
-  Client CLIENT;
+  Client client;
+  TastePacket packet;
 
   BrainLink(PApplet applet)
   {
-    CLIENT = new Client(applet, "127.0.0.1", 6683);
+    client = new Client(applet, "127.0.0.1", 6683);
+    packet = new TastePacket(client);
   }
 
   BrainLink(PApplet applet, String ip)
   {
-    CLIENT = new Client(applet, ip, 6683);
+    client = new Client(applet, ip, 6683);
+    packet = new TastePacket(client);
   }
 
   BrainLink(PApplet applet, String ip, int port)
   {
-    CLIENT = new Client(applet, ip, port);
+    client = new Client(applet, ip, port);
+    packet = new TastePacket(client);
   }
 
   void sendData()
@@ -34,8 +38,6 @@ class BrainLink
     img.resize(16,16);
     img.loadPixels();
 
-    TastePacket packet = new TastePacket(CLIENT);
-    
     //format our packet and get ready to send.
     packet.setCommand(COMMAND_SEND_FRAME);
     for (int i=0;i<img.pixels.length; i++) {
@@ -43,6 +45,62 @@ class BrainLink
     }
     packet.transmit();
   }
+
+  int[][] readData()
+  {
+    //format our packet and get ready to send.
+    packet.setCommand(COMMAND_GET_INPUTS);
+    packet.transmit();
+
+    int tries = 0;
+    while (!packet.isFinished())
+    {
+      packet.read();
+      delay(10);
+      tries++;
+
+      if (tries == 100)
+      {
+        println("CLIENT: Failed to read input.");
+        return new int[16][16];
+      }
+    }
+
+    int[][] gridIn  = new int[16][16];
+
+    int command = packet.getCommand();
+
+    if (command == COMMAND_SEND_INPUTS)
+    {
+      int[] data = packet.getPayload();
+
+      if (data.length == 256) {
+        for (int i=0; i<data.length; i++)
+        {
+          int y = i / 16;
+          int x = i % 16;
+
+          gridIn[y][x] = data[i];
+          
+          packet.reset();
+        }
+        
+        println("CLIENT: Successful Input Frame.");
+      }
+      else {
+        println("ERROR: Frame byte count doesn't match grid size.");
+      }
+    }
+    else {
+      println("ERROR: Unknown command #" + command);
+    }
+
+    return gridIn;
+  }
+}
+
+class BrainLinkClient
+{
 }
 
 class TastePacket
@@ -104,7 +162,7 @@ class TastePacket
     buffer[bufferIndex] = i;
     bufferIndex++;
   }
-  
+
   void addData(String s)
   {
     for (int i=0; i<s.length(); i++)
@@ -120,108 +178,139 @@ class TastePacket
     client.write((byte)calculatedCRC);
     for (int i=0; i<bufferIndex; i++)
       client.write((byte)buffer[i]);
+
+    reset();
   }
 
-  void read() {
+  void read()
+  {
+    read(client);
+  }
 
-    //bail if we don't have a connection or whatnot.
-    client = server.available();
-    if (client == null) {
-      reset();
-      return;
-    }
-    
-    //println("TP: Got new client with " + client.available() + " byte message.");
-    
+  /*
+    Packet structure is as follows:
+   -----------------------------
+   | BYTE # | NAME/DESCRIPTION |
+   | 0 - 7  | SYNC STRING      |
+   | 8      | COMMAND BYTE     |
+   | 9, 10  | PAYLOAD SIZE     |
+   | 11     | CRC              |
+   | 12 - N | PAYLOAD          |
+   -----------------------------  
+   */
+  void read(Client newClient)
+  {
+
+    client = newClient;
+
     int c = -1;
-    while(client.available() > 0)
+    int tries = 0;
+
+    while (!isFinished())
     {
-      c = client.read();
-      
-      //println("TP: Byte: " + c + " (" + (char)c + ")");
-      
-      if (c >= 0)
+      if (client.available() > 0)
       {
-        //are we looking for a new incoming packet?
-        if (state == STATE_NEW)
+        println("TP: Client with " + client.available() + " byte message.");
+  
+        while(client.available() > 0)
         {
-          if ((char)c == sync.charAt(bufferIndex))
-          {
-            buffer[bufferIndex] = c;
-            bufferIndex++;
-          }
-          else
-            reset();
-
-          //if the buffer is now at the same length as our sync string, we matched. switch our mode and reset the index.
-          //we'll use the full buffer for the packet payload.
-          if (bufferIndex == sync.length()) {
-            state = STATE_SYNC;
-            bufferIndex = 0;
-            
-            //println("TP: synced up!");
-          }
-        }
-        //have we synced properly?  we're now looking for the command byte.
-        else if (state == STATE_SYNC)
-        {
-          command = c;
-          state = STATE_COMMAND;
-          
-           //println("TP: got command #" + command);
-        }
-        //have we received our command byte?  we're now looking for length data.
-        else if (state == STATE_COMMAND)
-        {
-          packetLength = c;
-          packetLength = packetLength << 8;
-
-          //did we get some bullshit?
           c = client.read();
-          if (c == -1) {
-            reset();
+  
+          //println("TP: Byte: " + c + " (" + (char)c + ")");
+  
+          if (c >= 0)
+          {
+            //are we looking for a new incoming packet?
+            if (state == STATE_NEW)
+            {
+              if ((char)c == sync.charAt(bufferIndex))
+              {
+                buffer[bufferIndex] = c;
+                bufferIndex++;
+              }
+              else
+                reset();
+  
+              //if the buffer is now at the same length as our sync string, we matched. switch our mode and reset the index.
+              //we'll use the full buffer for the packet payload.
+              if (bufferIndex == sync.length()) {
+                state = STATE_SYNC;
+                bufferIndex = 0;
+  
+                //println("TP: synced up!");
+              }
+            }
+            //have we synced properly?  we're now looking for the command byte.
+            else if (state == STATE_SYNC)
+            {
+              command = c;
+              state = STATE_COMMAND;
+  
+              //println("TP: got command #" + command);
+            }
+            //have we received our command byte?  we're now looking for length data.
+            else if (state == STATE_COMMAND)
+            {
+              packetLength = c;
+              packetLength = packetLength << 8;
+  
+              //did we get some bullshit?
+              c = client.read();
+              if (c == -1) {
+                reset();
+                return;
+              } 
+              else {
+                packetLength += c;
+              }
+  
+              if (packetLength > bufferSize) {
+                //println("TASTEPACKET: packet length of " + packetLength + " is too long.");
+                reset();
+              } 
+              else {
+                state = STATE_LENGTH;
+                //println("TP: payload length of " + packetLength);
+              }
+            }
+            //have we received our payload length bytes?  we're now looking for the crc byte.
+            else if (state == STATE_LENGTH)
+            {
+              receivedCRC = c;
+              state = STATE_CRC;
+  
+              if (packetLength == 0)
+                state = STATE_FINISHED;
+            }
+            //have we received our CRC info? we're now reading in our payload.
+            else if (state == STATE_CRC)
+            {
+              buffer[bufferIndex] = c;
+              bufferIndex++;
+  
+              if (bufferIndex == packetLength)
+                state = STATE_FINISHED;
+            }
+            //something weird happened.
+            else
+              reset();
+          }
+  
+          //if we got a packet, we're done.
+          if (state == STATE_FINISHED)
             return;
-          } 
-          else {
-            packetLength += c;
-          }
-
-          if (packetLength > bufferSize) {
-            //println("TASTEPACKET: packet length of " + packetLength + " is too long.");
-            reset();
-          } 
-          else {
-            state = STATE_LENGTH;
-            //println("TP: payload length of " + packetLength);
-          }
         }
-        //have we received our payload length bytes?  we're now looking for the crc byte.
-        else if (state == STATE_LENGTH)
-        {
-          receivedCRC = c;
-          state = STATE_CRC;
-        }
-        //have we received our CRC info? we're now reading in our payload.
-        else if (state == STATE_CRC)
-        {
-          buffer[bufferIndex] = c;
-          bufferIndex++;
-
-          if (bufferIndex == packetLength)
-            state = STATE_FINISHED;
-        }
-        //something weird happened.
-        else
-          reset();
       }
+      
+      delay(10);
+      tries++;
 
-      //if we got a packet, we're done.
-      if (state == STATE_FINISHED)
-        return;
+      if (tries == 100)
+      {
+        println("TP: PacketTimeout.");
+        break;
+      }
     }
-
-    //if we got this far, just reset.
-    reset();
   }
 
   boolean isFinished()

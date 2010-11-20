@@ -43,7 +43,6 @@ int[][] FRAME_BUFFER = new int[GRID_HEIGHT][GRID_WIDTH];
 Serial SERIAL;
 Server SERVER;
 TastePacket PACKET;
-TastePacket OUT_PACKET;
 
 // GLOBAL INPUT STUFF
 int[][] INPUT_BUFFER = new int[GRID_HEIGHT][GRID_WIDTH];
@@ -84,7 +83,6 @@ void initBuffer() {
 void initComms() {
   SERVER = new Server(this,NETWORK_PORT);
   PACKET = new TastePacket(SERVER);
-  OUT_PACKET = new TastePacket(SERVER);
 
   //either open a serial port or list them.
   if (SERIAL_PORT >= 0)
@@ -144,77 +142,102 @@ void serialEvent(Serial myPort)
 }
 
 void readData() {
-  PACKET.read();
 
-  if (PACKET.isFinished()) {
-    int command = PACKET.getCommand();
+  Client client = SERVER.available();
 
-    //if they want our version, let them know.
-    if (command == COMMAND_GET_VERSION)
-    {
-      //format our packet and get ready to send.
-      OUT_PACKET.setCommand(COMMAND_SEND_VERSION);
-      OUT_PACKET.addData("MouthBrain Version " + MB_VERSION);
-      OUT_PACKET.transmit();
-    }
-    //if they want our config, give it to them.
-    else if(command == COMMAND_GET_CONFIG)
-    {
-      //format our packet and get ready to send.
-      OUT_PACKET.setCommand(COMMAND_SEND_CONFIG);
-      OUT_PACKET.addData("Not Yet Implemented");
-      OUT_PACKET.transmit();
-    }
-    //if they want our inputs, let them know!
-    else if (command == COMMAND_GET_INPUTS)
-    {
-      //format our packet and get ready to send.
-      OUT_PACKET.setCommand(COMMAND_SEND_INPUTS);
-      for (int i=0;i<PIXEL_COUNT; i++) {
-        int y = i / GRID_HEIGHT;
-        int x = i % GRID_WIDTH;
-        OUT_PACKET.addData(INPUT_BUFFER[y][x]);
+  while (client != null)
+  {
+    println("SERVER: Got client, reading packet.");
+    PACKET.read(client);
+
+    if (PACKET.isFinished()) {
+      int command = PACKET.getCommand();
+
+      println("SERVER: got command " + command);
+
+      //if they want our version, let them know.
+      if (command == COMMAND_GET_VERSION)
+      {
+        println("SERVER: got version request.");
+        //format our packet and get ready to send.
+        PACKET.setCommand(COMMAND_SEND_VERSION);
+        PACKET.addData("MouthBrain Version " + MB_VERSION);
+        PACKET.transmit();
       }
-      OUT_PACKET.transmit();
-    }
-    //if they want our output frame, let them know!
-    else if (command == COMMAND_GET_FRAME)
-    {
-      //format our packet and get ready to send.
-      OUT_PACKET.setCommand(COMMAND_SEND_FRAME);
-      for (int i=0;i<PIXEL_COUNT; i++) {
-        int y = i / GRID_HEIGHT;
-        int x = i % GRID_WIDTH;
-        OUT_PACKET.addData(FRAME_BUFFER[y][x]);
+      //if they want our config, give it to them.
+      else if(command == COMMAND_GET_CONFIG)
+      {
+        println("SERVER: got config request.");
+        //format our packet and get ready to send.
+        PACKET.setCommand(COMMAND_SEND_CONFIG);
+        PACKET.addData("Not Yet Implemented");
+        PACKET.transmit();
       }
-      OUT_PACKET.transmit();
-    }
-    //if they have a frame, update our framebuffer.
-    else if (command == COMMAND_SEND_FRAME)
-    {
-      int[] data = PACKET.getPayload();
+      //if they want our inputs, let them know!
+      else if (command == COMMAND_GET_INPUTS)
+      {
+        println("SERVER: Got inputs request.");
 
-      if (data.length == PIXEL_COUNT) {
-        for (int i=0; i<data.length; i++)
-        {
+        //format our packet and get ready to send.
+        PACKET.setCommand(COMMAND_SEND_INPUTS);
+        for (int i=0;i<PIXEL_COUNT; i++) {
           int y = i / GRID_HEIGHT;
           int x = i % GRID_WIDTH;
-
-          FRAME_BUFFER[y][x] = data[i];
+          PACKET.addData(INPUT_BUFFER[y][x]);
         }
+        PACKET.transmit();
+      }
+      //if they want our output frame, let them know!
+      else if (command == COMMAND_GET_FRAME)
+      {
+        println("SERVER: Got frame request.");
 
-        if (SERIAL_PORT >= 0)
-        {
-          sendFrame();
+        //format our packet and get ready to send.
+        PACKET.setCommand(COMMAND_SEND_FRAME);
+        for (int i=0;i<PIXEL_COUNT; i++) {
+          int y = i / GRID_HEIGHT;
+          int x = i % GRID_WIDTH;
+          PACKET.addData(FRAME_BUFFER[y][x]);
+        }
+        PACKET.transmit();
+      }
+      //if they have a frame, update our framebuffer.
+      else if (command == COMMAND_SEND_FRAME)
+      {
+        //println("SERVER: Received frame.")
+
+        int[] data = PACKET.getPayload();
+
+        if (data.length == PIXEL_COUNT) {
+          for (int i=0; i<data.length; i++)
+          {
+            int y = i / GRID_HEIGHT;
+            int x = i % GRID_WIDTH;
+
+            FRAME_BUFFER[y][x] = data[i];
+          }
+
+          if (SERIAL_PORT >= 0)
+          {
+            sendFrame();
+          }
+        }
+        else {
+          println("SERVER: Frame byte count doesn't match grid size.");
         }
       }
       else {
-        println("ERROR: Frame byte count doesn't match grid size.");
+        println("SERVER: Unknown command #" + command);
       }
+      
+      PACKET.reset();
     }
-    else {
-      println("ERROR: Unknown command #" + command);
+    else
+    {
+      println("SERVER: packet not finished.");
     }
+
+    client = SERVER.available();
   }
 }
 
