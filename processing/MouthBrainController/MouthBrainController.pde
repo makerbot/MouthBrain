@@ -147,18 +147,18 @@ void readData() {
 
   while (client != null)
   {
-    println("SERVER: Got client, reading packet.");
+    //println("SERVER: Got client, reading packet.");
     PACKET.read(client);
 
     if (PACKET.isFinished()) {
       int command = PACKET.getCommand();
 
-      println("SERVER: got command " + command);
+      //println("SERVER: got command " + command);
 
       //if they want our version, let them know.
       if (command == COMMAND_GET_VERSION)
       {
-        println("SERVER: got version request.");
+        //println("SERVER: got version request.");
         //format our packet and get ready to send.
         PACKET.setCommand(COMMAND_SEND_VERSION);
         PACKET.addData("MouthBrain Version " + MB_VERSION);
@@ -167,7 +167,7 @@ void readData() {
       //if they want our config, give it to them.
       else if(command == COMMAND_GET_CONFIG)
       {
-        println("SERVER: got config request.");
+        //println("SERVER: got config request.");
         //format our packet and get ready to send.
         PACKET.setCommand(COMMAND_SEND_CONFIG);
         PACKET.addData("Not Yet Implemented");
@@ -176,7 +176,7 @@ void readData() {
       //if they want our inputs, let them know!
       else if (command == COMMAND_GET_INPUTS)
       {
-        println("SERVER: Got inputs request.");
+        //println("SERVER: Got inputs request.");
 
         //format our packet and get ready to send.
         PACKET.setCommand(COMMAND_SEND_INPUTS);
@@ -190,7 +190,7 @@ void readData() {
       //if they want our output frame, let them know!
       else if (command == COMMAND_GET_FRAME)
       {
-        println("SERVER: Got frame request.");
+        //println("SERVER: Got frame request.");
 
         //format our packet and get ready to send.
         PACKET.setCommand(COMMAND_SEND_FRAME);
@@ -229,7 +229,7 @@ void readData() {
       else {
         println("SERVER: Unknown command #" + command);
       }
-      
+
       PACKET.reset();
     }
     else

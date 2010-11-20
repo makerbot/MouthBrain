@@ -14,7 +14,7 @@ color high = color(255, 0, 0);
 
 void setup()
 {
-  frameRate(30);
+  frameRate(60);
   
   LINK = new BrainLink(this);
   

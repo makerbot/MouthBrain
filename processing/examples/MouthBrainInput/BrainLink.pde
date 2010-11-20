@@ -56,10 +56,10 @@ class BrainLink
     while (!packet.isFinished())
     {
       packet.read();
-      delay(10);
+      delay(1);
       tries++;
 
-      if (tries == 100)
+      if (tries == 1000)
       {
         println("CLIENT: Failed to read input.");
         return new int[16][16];
@@ -81,11 +81,11 @@ class BrainLink
           int x = i % 16;
 
           gridIn[y][x] = data[i];
-          
+
           packet.reset();
         }
-        
-        println("CLIENT: Successful Input Frame.");
+
+        //println("CLIENT: Successful Input Frame.");
       }
       else {
         println("ERROR: Frame byte count doesn't match grid size.");
@@ -210,14 +210,14 @@ class TastePacket
     {
       if (client.available() > 0)
       {
-        println("TP: Client with " + client.available() + " byte message.");
-  
+        //println("TP: Client with " + client.available() + " byte message.");
+
         while(client.available() > 0)
         {
           c = client.read();
-  
+
           //println("TP: Byte: " + c + " (" + (char)c + ")");
-  
+
           if (c >= 0)
           {
             //are we looking for a new incoming packet?
@@ -230,13 +230,13 @@ class TastePacket
               }
               else
                 reset();
-  
+
               //if the buffer is now at the same length as our sync string, we matched. switch our mode and reset the index.
               //we'll use the full buffer for the packet payload.
               if (bufferIndex == sync.length()) {
                 state = STATE_SYNC;
                 bufferIndex = 0;
-  
+
                 //println("TP: synced up!");
               }
             }
@@ -245,7 +245,7 @@ class TastePacket
             {
               command = c;
               state = STATE_COMMAND;
-  
+
               //println("TP: got command #" + command);
             }
             //have we received our command byte?  we're now looking for length data.
@@ -253,7 +253,7 @@ class TastePacket
             {
               packetLength = c;
               packetLength = packetLength << 8;
-  
+
               //did we get some bullshit?
               c = client.read();
               if (c == -1) {
@@ -263,7 +263,7 @@ class TastePacket
               else {
                 packetLength += c;
               }
-  
+
               if (packetLength > bufferSize) {
                 //println("TASTEPACKET: packet length of " + packetLength + " is too long.");
                 reset();
@@ -278,7 +278,7 @@ class TastePacket
             {
               receivedCRC = c;
               state = STATE_CRC;
-  
+
               if (packetLength == 0)
                 state = STATE_FINISHED;
             }
@@ -287,7 +287,7 @@ class TastePacket
             {
               buffer[bufferIndex] = c;
               bufferIndex++;
-  
+
               if (bufferIndex == packetLength)
                 state = STATE_FINISHED;
             }
@@ -295,19 +295,20 @@ class TastePacket
             else
               reset();
           }
-  
+
           //if we got a packet, we're done.
           if (state == STATE_FINISHED)
             return;
         }
       }
-      
-      delay(10);
+
+      delay(1);
       tries++;
 
-      if (tries == 100)
+      if (tries == 1000)
       {
         println("TP: PacketTimeout.");
+        reset();
         break;
       }
     }
