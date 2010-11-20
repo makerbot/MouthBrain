@@ -110,8 +110,6 @@ class TastePacket
     client.write((byte)calculatedCRC);
     for (int i=0; i<bufferIndex; i++)
       client.write((byte)buffer[i]);
-      
-    reset();
   }
 
   void read() {

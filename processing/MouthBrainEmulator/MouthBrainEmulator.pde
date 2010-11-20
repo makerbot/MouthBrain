@@ -8,7 +8,7 @@ int COMMAND_GET_INPUTS  = 3;
 int COMMAND_SEND_FRAME  = 4;
 
 // CONFIGURATION
-int SERIAL_PORT = -1;  //-1 to list ports, non-negative to choose the port.
+int SERIAL_PORT = 0;  //-1 to list ports, non-negative to choose the port.
 int SERIAL_RATE = 115200;
 int NETWORK_PORT = 6683; // M-O-U-F
 
@@ -19,7 +19,7 @@ float TONGUE_WIDTH_IN = 2;
 float TONGUE_HEIGHT_IN = 2.5;
 int GRID_WIDTH = 16;
 int GRID_HEIGHT = 16;
-float DPI = 256;
+float DPI = 128;
 
 // CALCULATED CONSTANTS
 float BOARD_WIDTH = BOARD_WIDTH_IN * DPI;
@@ -48,7 +48,7 @@ void setup() {
   size(WINDOW_WIDTH,WINDOW_HEIGHT);
   background(0);
 
-  frameRate(10);
+  frameRate(20);
 
   initBuffer();
   initComms();
@@ -57,11 +57,6 @@ void setup() {
 void draw() {
   readData();
   drawFrame();
-
-  if (SERIAL_PORT >= 0)
-  {
-    sendFrame();
-  }
 }
 
 void initBuffer() {
@@ -79,6 +74,16 @@ void initComms() {
   if (SERIAL_PORT >= 0)
   {
     SERIAL = new Serial(this, Serial.list()[SERIAL_PORT], SERIAL_RATE);
+    SERIAL.buffer(16);
+    
+    delay(10000);
+    println("WARMUP");
+    for (char c='a'; c<'z'; c++)
+    {
+     SERIAL.write((char)c);
+    }
+    println("COOLDOWN");
+  
   }
   else
   {
@@ -86,6 +91,11 @@ void initComms() {
     println("Available Serial Ports:");
     println(Serial.list());
   }
+}
+
+void serialEvent(Serial myPort)
+{
+     println("IN:" + myPort.readString()); 
 }
 
 void readData() {
@@ -123,6 +133,11 @@ void readData() {
 
           FRAME_BUFFER[y][x] = data[i];
         }
+ 
+        if (SERIAL_PORT >= 0)
+        {
+          sendFrame();
+        }
       }
       else {
         println("ERROR: Frame byte count doesn't match grid size.");
@@ -152,15 +167,26 @@ void drawPixels() {
 }
 
 void sendFrame() {
-  SERIAL.write("[FRAME]");
+  
+//  println("HOST: Start Frame");
+
+  SERIAL.write('[');
+  SERIAL.write('F');
+  SERIAL.write('R');
+  SERIAL.write('A');
+  SERIAL.write('M');
+  SERIAL.write('E');
+  SERIAL.write(']');
 
   for (int y=0; y<GRID_HEIGHT; y++) {
     for (int x=0; x<GRID_WIDTH; x++) {
-      SERIAL.write(FRAME_BUFFER[y][x]);
+      SERIAL.write((byte)FRAME_BUFFER[y][x]);
     }
-
-    delay(10);
+    //delay(1);
   }
+
+//  println("HOST: End Frame");
+
 }
 
 void drawBoard() {

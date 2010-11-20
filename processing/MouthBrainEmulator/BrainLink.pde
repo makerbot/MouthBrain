@@ -121,7 +121,7 @@ class TastePacket
       return;
     }
     
-    println("TP: Got new client with " + client.available() + " byte message.");
+    //println("TP: Got new client with " + client.available() + " byte message.");
     
     int c = -1;
     while(client.available() > 0)
@@ -149,7 +149,7 @@ class TastePacket
             state = STATE_SYNC;
             bufferIndex = 0;
             
-            println("TP: synced up!");
+            //println("TP: synced up!");
           }
         }
         //have we synced properly?  we're now looking for the command byte.
@@ -158,7 +158,7 @@ class TastePacket
           command = c;
           state = STATE_COMMAND;
           
-           println("TP: got command #" + command);
+           //println("TP: got command #" + command);
         }
         //have we received our command byte?  we're now looking for length data.
         else if (state == STATE_COMMAND)
@@ -177,7 +177,7 @@ class TastePacket
           }
 
           if (packetLength > bufferSize) {
-            println("TASTEPACKET: packet length of " + packetLength + " is too long.");
+            //println("TASTEPACKET: packet length of " + packetLength + " is too long.");
             reset();
           } 
           else {

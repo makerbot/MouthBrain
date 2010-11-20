@@ -33,15 +33,15 @@ void reset()
   //set our anode pins high.
   for (byte i=0; i<XDIM; i++)
   {
-    pinMode(anodePins[i], OUTPUT);
-    digitalWrite(i, HIGH);
+    pinMode(anodePins[i], INPUT);
+    digitalWrite(i, LOW);
   }
 
   //set our cathode pins high.
   for (byte i=0; i<YDIM; i++)
   {
-    pinMode(cathodePins[i], OUTPUT);
-    digitalWrite(i, HIGH);
+    pinMode(cathodePins[i], INPUT);
+    digitalWrite(cathodePins[i], LOW);
   }
 
   //make our analog pins high impedance.
@@ -66,12 +66,69 @@ void clearFrameBuffer()
   }
 }
 
+int scanIndex=0;
+int lastTime = 0;
+
 void loop()
 {
   frameIn();
   //frameOut();
   
+  /*  
+  if (millis()-lastTime > 10)
+  {
+    setScan();
+    lastTime = millis();
+  }
+  */
+  
   drawFrame();
+}
+
+void setScan()
+{
+  byte x = scanIndex%XDIM;
+  byte y = scanIndex/YDIM;
+  
+  //clearFrameBuffer();
+  frameBuffer[y][x] = 255;
+  
+  scanIndex++;
+  
+  if (scanIndex == TOTAL_PIXELS)
+  {
+    scanIndex = 0;
+    clearFrameBuffer();
+//    drawFrame();
+//    delay(2000);
+  }
+}
+
+void drawFrame()
+{
+  for (int y=0; y<YDIM; y++)
+  {
+    pinMode(cathodePins[y], OUTPUT);
+    digitalWrite(cathodePins[y], LOW);
+    
+    for (int x=0; x<XDIM; x++)
+    {
+      if (frameBuffer[y][x] > 0)
+      {
+        pinMode(anodePins[x], OUTPUT);
+        analogWrite(anodePins[x], frameBuffer[y][x]);
+      }
+      else
+      {
+        digitalWrite(anodePins[x], LOW);
+        pinMode(anodePins[x], INPUT);
+      }
+    }
+    
+//    delayMicroseconds(100);
+    
+    pinMode(cathodePins[y], INPUT); //high impedance
+  }
 }
 
 void selftest()
@@ -125,7 +182,9 @@ void frameOut()
   Serial.print("[AFRAME]");
   for (byte y=0; y<YDIM; y++)
   {
+    pinMode(cathodePins[y], OUTPUT);
     digitalWrite(cathodePins[y], LOW);
+    
     for (byte x=0; x<XDIM; x++)
     {
       digitalWrite(anodePins[x], HIGH);
@@ -135,7 +194,8 @@ void frameOut()
       Serial.print(sample);
     }
 
-    digitalWrite(cathodePins[y], HIGH);
+    pinMode(cathodePins[y], INPUT); //high impedance
+    digitalWrite(cathodePins[y], LOW); //pullup off
   }
 
   delay(1000);
@@ -150,8 +210,10 @@ void frameIn()
   byte y = 0;
   byte noData = 0;
 
+pinMode(13, OUTPUT);
+
   //anything at all?
-  if (Serial.available())
+  if (Serial.available() > 0)
   {
     while(true)
     {
@@ -168,7 +230,10 @@ void frameIn()
           //compare to the characters in our index.
           if (b == frameSyncString[syncIndex])
           {
+            //Serial.print((byte)b);
             syncIndex++;
+            
+            digitalWrite(13, HIGH);
 
             if (syncIndex == FRAME_SYNC_LENGTH)
               frameSync = true;
@@ -178,10 +243,15 @@ void frameIn()
         }
         else
         {
+          digitalWrite(13, HIGH);
+
+          //Serial.print((byte)b, HEX);
+          //Serial.print(' ');
+ 
           x = pixelCount % XDIM;
           y = pixelCount / YDIM;
 
-          frameBuffer[y][x] = b;
+          frameBuffer[x][y] = b;
 
           pixelCount++;
 
@@ -199,21 +269,6 @@ void frameIn()
           return;
       }
     }
-  }
-}
-
-void drawFrame()
-{
-  for (int y=0; y<YDIM; y++)
-  {
-    digitalWrite(cathodePins[y], LOW);
-
-    for (int x=0; x<XDIM; x++)
-    {
-      analogWrite(anodePins[x], frameBuffer[y][x]);
-    }
-    
-    digitalWrite(cathodePins[y], HIGH);
   }
 }
 
