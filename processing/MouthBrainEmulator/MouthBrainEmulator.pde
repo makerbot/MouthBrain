@@ -1,54 +1,61 @@
 import processing.net.*;
 import processing.serial.*;
 
-// CONSTANTS
-int COMMAND_GET_VERSION = 1;
-int COMMAND_GET_CONFIG  = 2;
-int COMMAND_GET_INPUTS  = 3;
-int COMMAND_SEND_FRAME  = 4;
-
 // CONFIGURATION
-int SERIAL_PORT = 0;  //-1 to list ports, non-negative to choose the port.
+int SERIAL_PORT = -1;  //-1 to list ports, non-negative to choose the port.
 int SERIAL_RATE = 115200;
 int NETWORK_PORT = 6683; // M-O-U-F
+String MB_VERSION = "0001";
 
 // DISPLAY CONFIG
 float BOARD_WIDTH_IN = 1;
-float BOARD_HEIGHT_IN = 2;
+float BOARD_HEIGHT_IN = 1.75;
 float TONGUE_WIDTH_IN = 2;
 float TONGUE_HEIGHT_IN = 2.5;
 int GRID_WIDTH = 16;
 int GRID_HEIGHT = 16;
-float DPI = 128;
+float DPI = 256;
 
 // CALCULATED CONSTANTS
+int PIXEL_COUNT = GRID_WIDTH * GRID_HEIGHT;
 float BOARD_WIDTH = BOARD_WIDTH_IN * DPI;
 float BOARD_HEIGHT = BOARD_HEIGHT_IN * DPI;
 float TONGUE_WIDTH = TONGUE_WIDTH_IN * DPI;
 float TONGUE_HEIGHT = TONGUE_HEIGHT_IN * DPI;
 float TONGUE_PIXEL_SPACING = (BOARD_WIDTH-DPI/16)/GRID_WIDTH;
 float TONGUE_PIXEL_SIZE = TONGUE_PIXEL_SPACING*0.75;
-int WINDOW_WIDTH = round(1.25 * TONGUE_WIDTH);
-int WINDOW_HEIGHT = round(1.25 * TONGUE_HEIGHT);
+int WINDOW_WIDTH = round(1.35 * TONGUE_WIDTH);
+int WINDOW_HEIGHT = round(1.35 * TONGUE_HEIGHT);
 float BOARD_TOP =  WINDOW_HEIGHT-TONGUE_HEIGHT-BOARD_HEIGHT/4;
 float BOARD_LEFT = WINDOW_WIDTH/2-BOARD_WIDTH/2;
 float TONGUE_TOP = WINDOW_HEIGHT-TONGUE_HEIGHT;
 float TONGUE_LEFT = WINDOW_WIDTH/2-TONGUE_WIDTH/2;
 float TONGUE_BASE_TOP = WINDOW_HEIGHT-TONGUE_HEIGHT*3/4-2;
-float GRID_TOP = BOARD_TOP + BOARD_HEIGHT/2;
+float GRID_TOP = BOARD_TOP + BOARD_HEIGHT * 0.45;
 float GRID_LEFT = WINDOW_WIDTH/2-TONGUE_PIXEL_SPACING*8+TONGUE_PIXEL_SPACING/8;
+float INPUT_GRID_TOP = GRID_TOP + TONGUE_PIXEL_SPACING * (GRID_HEIGHT+3);
+float INPUT_GRID_LEFT = GRID_LEFT;
 
-// GLOBALS
+// GLOBAL OUTPUT STUFF
 int[][] FRAME_BUFFER = new int[GRID_HEIGHT][GRID_WIDTH];
+
+// GLOBAL COMMS
 Serial SERIAL;
 Server SERVER;
 TastePacket PACKET;
+TastePacket OUT_PACKET;
+
+// GLOBAL INPUT STUFF
+int[][] INPUT_BUFFER = new int[GRID_HEIGHT][GRID_WIDTH];
+int inputBufferIndex;
+boolean inputBufferSync;
+String inputBufferSyncWord = "[FRAME]";
 
 void setup() {
-  size(WINDOW_WIDTH,WINDOW_HEIGHT);
+  size(WINDOW_WIDTH, WINDOW_HEIGHT);
   background(0);
 
-  frameRate(20);
+  frameRate(60);
 
   initBuffer();
   initComms();
@@ -60,9 +67,16 @@ void draw() {
 }
 
 void initBuffer() {
+
   for (int y=0; y<GRID_HEIGHT; y++) {
     for (int x=0; x<GRID_WIDTH; x++) {
       FRAME_BUFFER[y][x] = 255;
+    }
+  }
+
+  for (int y=0; y<GRID_HEIGHT; y++) {
+    for (int x=0; x<GRID_WIDTH; x++) {
+      INPUT_BUFFER[y][x] = 0;
     }
   }
 }
@@ -70,32 +84,63 @@ void initBuffer() {
 void initComms() {
   SERVER = new Server(this,NETWORK_PORT);
   PACKET = new TastePacket(SERVER);
+  OUT_PACKET = new TastePacket(SERVER);
 
+  //either open a serial port or list them.
   if (SERIAL_PORT >= 0)
   {
+    inputBufferIndex = 0;
+    inputBufferSync = false;
     SERIAL = new Serial(this, Serial.list()[SERIAL_PORT], SERIAL_RATE);
-    SERIAL.buffer(16);
-    
-    delay(10000);
-    println("WARMUP");
-    for (char c='a'; c<'z'; c++)
-    {
-     SERIAL.write((char)c);
-    }
-    println("COOLDOWN");
-  
+    SERIAL.buffer(1);
   }
   else
   {
     // List all the available serial ports:
     println("Available Serial Ports:");
-    println(Serial.list());
+    //println(Serial.list());
   }
 }
 
 void serialEvent(Serial myPort)
 {
-     println("IN:" + myPort.readString()); 
+  //println("IN:" + myPort.readString());
+  char c = myPort.readChar();
+
+  //double check we got a valid character.
+  if (c >= 0 && c <= 255)
+  {
+    //once we've synced, time for pixels!
+    if (inputBufferSync)
+    {
+      int x = inputBufferIndex % GRID_WIDTH;
+      int y = inputBufferIndex / GRID_HEIGHT;
+      inputBufferIndex++;
+
+      INPUT_BUFFER[y][x] = (int)c;
+
+      //once we've gotten all pixels, we're done.
+      if (inputBufferIndex == PIXEL_COUNT)
+      {
+        inputBufferIndex = 0;
+        inputBufferSync = false;
+      }
+    }
+    //keep reading characters until we find our sync string.
+    else
+    {
+      //just compare it one at a time. if we match, increment. 
+      if (c == inputBufferSyncWord.charAt(inputBufferIndex))
+        inputBufferIndex++;
+
+      //once we've matched all the characters, we're in sync!
+      if (inputBufferIndex == inputBufferSyncWord.length())
+      {
+        inputBufferIndex = 0;
+        inputBufferSync = true;
+      }
+    }
+  }
 }
 
 void readData() {
@@ -107,25 +152,49 @@ void readData() {
     //if they want our version, let them know.
     if (command == COMMAND_GET_VERSION)
     {
-      //TODO
-      println("VERSION 0000");
+      //format our packet and get ready to send.
+      OUT_PACKET.setCommand(COMMAND_SEND_VERSION);
+      OUT_PACKET.addData("MouthBrain Version " + MB_VERSION);
+      OUT_PACKET.transmit();
     }
     //if they want our config, give it to them.
     else if(command == COMMAND_GET_CONFIG)
     {
-      //TODO
-      println("CONFIG REQUEST");
+      //format our packet and get ready to send.
+      OUT_PACKET.setCommand(COMMAND_SEND_CONFIG);
+      OUT_PACKET.addData("Not Yet Implemented");
+      OUT_PACKET.transmit();
     }
     //if they want our inputs, let them know!
     else if (command == COMMAND_GET_INPUTS)
     {
+      //format our packet and get ready to send.
+      OUT_PACKET.setCommand(COMMAND_SEND_INPUTS);
+      for (int i=0;i<PIXEL_COUNT; i++) {
+        int y = i / GRID_HEIGHT;
+        int x = i % GRID_WIDTH;
+        OUT_PACKET.addData(INPUT_BUFFER[y][x]);
+      }
+      OUT_PACKET.transmit();
+    }
+    //if they want our output frame, let them know!
+    else if (command == COMMAND_GET_FRAME)
+    {
+      //format our packet and get ready to send.
+      OUT_PACKET.setCommand(COMMAND_SEND_FRAME);
+      for (int i=0;i<PIXEL_COUNT; i++) {
+        int y = i / GRID_HEIGHT;
+        int x = i % GRID_WIDTH;
+        OUT_PACKET.addData(FRAME_BUFFER[y][x]);
+      }
+      OUT_PACKET.transmit();
     }
     //if they have a frame, update our framebuffer.
     else if (command == COMMAND_SEND_FRAME)
     {
       int[] data = PACKET.getPayload();
 
-      if (data.length == GRID_HEIGHT * GRID_WIDTH) {
+      if (data.length == PIXEL_COUNT) {
         for (int i=0; i<data.length; i++)
         {
           int y = i / GRID_HEIGHT;
@@ -133,7 +202,7 @@ void readData() {
 
           FRAME_BUFFER[y][x] = data[i];
         }
- 
+
         if (SERIAL_PORT >= 0)
         {
           sendFrame();
@@ -150,6 +219,14 @@ void readData() {
 }
 
 void drawFrame() {
+  background(0);
+
+  for (int y=0; y<GRID_HEIGHT; y++) {
+    for (int x=0; x<GRID_WIDTH; x++) {
+      INPUT_BUFFER[y][x] = (int)(random(0, 255));
+    }
+  }
+
   drawTongue();
   drawBoard();
   drawPixels();
@@ -162,13 +239,17 @@ void drawPixels() {
       noStroke();
       fill(250,247,57,255-pixel);
       rect(GRID_LEFT+x*TONGUE_PIXEL_SPACING,GRID_TOP+y*TONGUE_PIXEL_SPACING,TONGUE_PIXEL_SIZE,TONGUE_PIXEL_SIZE);
+
+      pixel = INPUT_BUFFER[y][x];
+      fill(250,247,57,pixel);
+      rect(INPUT_GRID_LEFT+x*TONGUE_PIXEL_SPACING, INPUT_GRID_TOP+y*TONGUE_PIXEL_SPACING, TONGUE_PIXEL_SIZE, TONGUE_PIXEL_SIZE);
     }
   }
 }
 
 void sendFrame() {
-  
-//  println("HOST: Start Frame");
+
+  //  println("HOST: Start Frame");
 
   SERIAL.write('[');
   SERIAL.write('F');
@@ -185,8 +266,7 @@ void sendFrame() {
     //delay(1);
   }
 
-//  println("HOST: End Frame");
-
+  //  println("HOST: End Frame");
 }
 
 void drawBoard() {

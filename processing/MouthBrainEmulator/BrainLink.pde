@@ -1,13 +1,17 @@
 import processing.net.*;
 
+int COMMAND_GET_VERSION  = 1;
+int COMMAND_GET_CONFIG   = 2;
+int COMMAND_GET_INPUTS   = 3;
+int COMMAND_GET_FRAME    = 4;
+int COMMAND_SEND_FRAME   = 5;
+int COMMAND_SEND_VERSION = 6;
+int COMMAND_SEND_CONFIG  = 7;
+int COMMAND_SEND_INPUTS  = 8;
+
 class BrainLink
 {
   Client CLIENT;
-
-  int COMMAND_GET_VERSION = 1;
-  int COMMAND_GET_CONFIG  = 2;
-  int COMMAND_GET_INPUTS  = 3;
-  int COMMAND_SEND_FRAME  = 4;
 
   BrainLink(PApplet applet)
   {
@@ -99,6 +103,12 @@ class TastePacket
   {
     buffer[bufferIndex] = i;
     bufferIndex++;
+  }
+  
+  void addData(String s)
+  {
+    for (int i=0; i<s.length(); i++)
+      addData((int)s.charAt(i));
   }
 
   void transmit()
