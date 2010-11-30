@@ -48,7 +48,7 @@ void reset()
   for (byte i=0; i<XDIM; i++)
   {
     pinMode(analogPins[i], INPUT);
-    digitalWrite(i, HIGH);
+    digitalWrite(i, LOW);
   }
 
   clearFrameBuffer();	
@@ -82,7 +82,7 @@ void loop()
   }
   */
   
-  drawFrame();
+  //drawFrame();
 }
 
 void setScan()
@@ -179,7 +179,7 @@ void selftest()
 
 void frameOut()
 {
-  Serial.print("[AFRAME]");
+  Serial.print("[FRAME]");
   for (byte y=0; y<YDIM; y++)
   {
     pinMode(cathodePins[y], OUTPUT);
@@ -187,18 +187,22 @@ void frameOut()
     
     for (byte x=0; x<XDIM; x++)
     {
+      pinMode(anodePins[x], OUTPUT);
       digitalWrite(anodePins[x], HIGH);
+      
       byte sample = analogRead(analogPins[x]) >> 2;
+      
       digitalWrite(anodePins[x], LOW);
-
+      pinMode(anodePins[x], INPUT);
+      
       Serial.print(sample);
     }
 
     pinMode(cathodePins[y], INPUT); //high impedance
     digitalWrite(cathodePins[y], LOW); //pullup off
   }
-
-  delay(1000);
+  
+  delay(2000);
 }
 
 void frameIn()
@@ -263,9 +267,9 @@ pinMode(13, OUTPUT);
       else
       {
         noData++;
-        delay(10);
+        delay(1);
 
-        if (noData == 100)
+        if (noData == 1000)
           return;
       }
     }
