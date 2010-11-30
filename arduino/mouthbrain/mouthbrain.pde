@@ -3,11 +3,14 @@
 #define TOTAL_PIXELS 256
 
 byte anodePins[XDIM] = {
-  13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 14, 15, 16, 17};
-byte cathodePins[YDIM] = {
-  52, 50, 48, 46, 44, 42, 40, 38, 36, 34, 32, 30, 28, 26};
+  17, 16, 15, 14, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13
+};
 byte analogPins[XDIM] = {
-  0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15};
+  15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0
+};
+byte cathodePins[YDIM] = {
+  50, 48, 46, 44, 42, 40, 38, 36, 34, 32, 30, 28, 26, 24
+};
 
 byte frameBuffer[YDIM][XDIM];
 
@@ -71,8 +74,10 @@ int lastTime = 0;
 
 void loop()
 {
-  frameIn();
-  //frameOut();
+  //frameIn();
+  frameOut();
+  
+  delay(250);
   
   /*  
   if (millis()-lastTime > 10)
@@ -194,15 +199,13 @@ void frameOut()
       
       digitalWrite(anodePins[x], LOW);
       pinMode(anodePins[x], INPUT);
-      
+
       Serial.print(sample);
     }
 
     pinMode(cathodePins[y], INPUT); //high impedance
     digitalWrite(cathodePins[y], LOW); //pullup off
   }
-  
-  delay(2000);
 }
 
 void frameIn()
@@ -213,8 +216,6 @@ void frameIn()
   byte x = 0;
   byte y = 0;
   byte noData = 0;
-
-pinMode(13, OUTPUT);
 
   //anything at all?
   if (Serial.available() > 0)
@@ -237,8 +238,6 @@ pinMode(13, OUTPUT);
             //Serial.print((byte)b);
             syncIndex++;
             
-            digitalWrite(13, HIGH);
-
             if (syncIndex == FRAME_SYNC_LENGTH)
               frameSync = true;
           }
@@ -247,8 +246,6 @@ pinMode(13, OUTPUT);
         }
         else
         {
-          digitalWrite(13, HIGH);
-
           //Serial.print((byte)b, HEX);
           //Serial.print(' ');
  
