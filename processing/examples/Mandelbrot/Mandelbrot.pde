@@ -6,6 +6,8 @@
 float xmin = -2.5; 
 float ymin = -2; 
 float wh = 4;
+float xmax = xmin + wh;
+float ymax = ymin + wh;
 
 //MOUTHBRAIN SPECIFIC PARAMS
 boolean invert = true;
@@ -15,24 +17,44 @@ BrainLink LINK;
 
 void setup() {
   size(256, 256, P2D);
-  noLoop();
-  background(255);
+  frameRate(30);
+
   // Make sure we can write to the pixels[] array. 
   // Only need to do this once since we don't do any other drawing.
-  loadPixels();
-  
   LINK = new BrainLink(this);
 }
 
 void draw() {
+
+  if (mousePressed && (mouseButton == LEFT)) {
+    if (mouseX / 256 > 0.5)
+      xmin = xmin * 0.9;
+    else
+      xmax = xmax * 0.9;
+
+    if (mouseY / 256 > 0.5)
+      ymin = ymin * 0.9;
+    else
+      ymax = ymax * 0.9;
+  } 
+  else if (mousePressed && (mouseButton == RIGHT)) {
+    if (mouseX / 256 > 0.5)
+      xmin = xmin * 1.1;
+    else
+      xmax = xmax * 1.1;
+
+    if (mouseY / 256 > 0.5)
+      ymin = ymin * 1.1;
+    else
+      ymax = ymax * 1.1;
+  }
+
+  background(255);
+  loadPixels();
+
   // Maximum number of iterations for each point on the complex plane
   int maxiterations = 200;
 
-  // x goes from xmin to xmax
-  float xmax = xmin + wh;
-  // y goes from ymin to ymax
-  float ymax = ymin + wh;
-  
   // Calculate amount we increment x,y for each pixel
   float dx = (xmax - xmin) / (width);
   float dy = (ymax - ymin) / (height);
@@ -43,7 +65,7 @@ void draw() {
     // Start x
     float x = xmin;
     for (int i = 0;  i < width; i++) {
-      
+
       // Now we test, as we iterate z = z^2 + cm does z tend towards infinity?
       float a = x;
       float b = y;
@@ -60,24 +82,25 @@ void draw() {
         }
         n++;
       }
-      
+
       // We color each pixel based on how long it takes to get to infinity
       // If we never got there, let's pick the color black
       if (n == maxiterations) {
         pixels[i+j*width] = 0;
-      } else {
+      } 
+      else {
         // Gosh, we could make fancy colors here if we wanted
         if (invert)
-         pixels[i+j*width] = color(255 - (n*16 % 255) / courseness);
-       else
-         pixels[i+j*width] = color((n*16 % 255) / courseness);
+          pixels[i+j*width] = color(255 - (n*16 % 255) / courseness);
+        else
+          pixels[i+j*width] = color((n*16 % 255) / courseness);
       }
       x += dx;
     }
     y += dy;
   }
   updatePixels();
-  
+
   LINK.sendData();
 }
 

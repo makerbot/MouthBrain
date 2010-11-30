@@ -4,7 +4,8 @@ void setup()
 {
   noStroke();
   size(16*16, 16*16,P2D);
-  frameRate(10);
+  frameRate(1);
+ // noLoop();
   
   LINK = new BrainLink(this);
 }
