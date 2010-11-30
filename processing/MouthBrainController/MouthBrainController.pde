@@ -2,7 +2,7 @@ import processing.net.*;
 import processing.serial.*;
 
 // CONFIGURATION
-int SERIAL_PORT = -1;  //-1 to list ports, non-negative to choose the port.
+int SERIAL_PORT = 0;  //-1 to list ports, non-negative to choose the port.
 int SERIAL_RATE = 115200;
 int NETWORK_PORT = 6683; // M-O-U-F
 String MB_VERSION = "0001";
@@ -14,7 +14,7 @@ float TONGUE_WIDTH_IN = 2;
 float TONGUE_HEIGHT_IN = 2.5;
 int GRID_WIDTH = 16;
 int GRID_HEIGHT = 16;
-float DPI = 256;
+float DPI = 128;
 
 // CALCULATED CONSTANTS
 int PIXEL_COUNT = GRID_WIDTH * GRID_HEIGHT;
@@ -96,7 +96,7 @@ void initComms() {
   {
     // List all the available serial ports:
     println("Available Serial Ports:");
-    //println(Serial.list());
+    println(Serial.list());
   }
 }
 
@@ -244,11 +244,13 @@ void readData() {
 void drawFrame() {
   background(0);
 
+  /*
   for (int y=0; y<GRID_HEIGHT; y++) {
     for (int x=0; x<GRID_WIDTH; x++) {
       INPUT_BUFFER[y][x] = (int)(random(0, 255));
     }
   }
+  */
 
   drawTongue();
   drawBoard();
