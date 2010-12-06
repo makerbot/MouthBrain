@@ -8,7 +8,7 @@ void setup() {
   println(Capture.list());
   capture = new Capture(this, 213, 160);
   brainLink = new BrainLink(this);
-  frameRate(16);
+  frameRate(2);
 }
 
 void draw() {

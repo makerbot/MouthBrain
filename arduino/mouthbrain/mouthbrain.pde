@@ -3,13 +3,13 @@
 #define TOTAL_PIXELS 256
 
 byte anodePins[XDIM] = {
-  17, 16, 15, 14, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13
+  17, 16, 15, 14,  2,  3,  4,  5,  6,  7,  8,  9, 10, 11, 12, 13
 };
 byte analogPins[XDIM] = {
-  15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0
+  15, 14, 13, 12, 11, 10,  9,  8,  7,  6,  5,  4,  3,  2,  1,  0
 };
 byte cathodePins[YDIM] = {
-  50, 48, 46, 44, 42, 40, 38, 36, 34, 32, 30, 28, 26, 24
+  52, 50, 48, 46, 44, 42, 40, 38, 36, 34, 32, 30, 28, 26, 24, 22
 };
 
 byte frameBuffer[YDIM][XDIM];
@@ -40,7 +40,7 @@ void reset()
     digitalWrite(i, LOW);
   }
 
-  //set our cathode pins high.
+  //set our cathode pins high impedance.
   for (byte i=0; i<YDIM; i++)
   {
     pinMode(cathodePins[i], INPUT);
@@ -74,10 +74,10 @@ int lastTime = 0;
 
 void loop()
 {
-  //frameIn();
-  frameOut();
+  frameIn();
+  //frameOut();
   
-  delay(250);
+//  delay(250);
   
   /*  
   if (millis()-lastTime > 10)
@@ -96,7 +96,7 @@ void setScan()
   byte y = scanIndex/YDIM;
   
   //clearFrameBuffer();
-  frameBuffer[y][x] = 255;
+  frameBuffer[y][x] = 0;
   
   scanIndex++;
   
@@ -111,32 +111,41 @@ void setScan()
 
 void drawFrame()
 {
+  // For each row
   for (int y=0; y<YDIM; y++)
   {
-    digitalWrite(cathodePins[y], LOW);
-    pinMode(cathodePins[y], OUTPUT);
-    
+    // For each column
     for (int x=0; x<XDIM; x++)
     {
-      if (frameBuffer[y][x] > 128)
+        // Turn the row off
+        digitalWrite(cathodePins[y], LOW);
+        pinMode(cathodePins[y], OUTPUT);
+        
+      // If we have some data
+      if (frameBuffer[y][x] > 0)
       {
-        pinMode(anodePins[x], INPUT); //high impedance
-        digitalWrite(anodePins[x], LOW); //turn off pullup
-        //pinMode(anodePins[x], OUTPUT);
-        //digitalWrite(anodePins[x], LOW);
+        // Turn the pixel on
+        pinMode(anodePins[x], OUTPUT); //output
+        //analogWrite(anodePins[x], frameBuffer[y][x]);
+        digitalWrite(anodePins[x], HIGH); //energize electrode
+
       }
       else
       {
-        pinMode(anodePins[x], OUTPUT); //output
-        analogWrite(anodePins[x], frameBuffer[y][x]);
-        //digitalWrite(anodePins[x], HIGH); //energize electrode
+        // Turn the pixel off
+        pinMode(anodePins[x], INPUT); //high impedance
+        digitalWrite(anodePins[x], LOW); //turn off pullup
       }
+
+      delayMicroseconds(10);
+
+        pinMode(cathodePins[y], INPUT); //high impedance
+        //digitalWrite(cathodePins[y], HIGH); //debug purposes only!!!
+
+        digitalWrite(anodePins[x], LOW); //go low
+        pinMode(anodePins[x], INPUT); //high impedance
+
     }
-    
-//    delayMicroseconds(100);
-    
-    pinMode(cathodePins[y], INPUT); //high impedance
-    //digitalWrite(cathodePins[y], HIGH);
   }
 }
 
@@ -254,9 +263,9 @@ void frameIn()
           //Serial.print(' ');
  
           x = pixelCount % XDIM;
-          y = pixelCount / YDIM;
+          y = pixelCount / XDIM;
 
-          frameBuffer[x][y] = b;
+          frameBuffer[y][x] = b;
 
           pixelCount++;
 

@@ -15,7 +15,7 @@ float TONGUE_WIDTH_IN = 2;
 float TONGUE_HEIGHT_IN = 2.5;
 int GRID_WIDTH = 16;
 int GRID_HEIGHT = 16;
-float DPI = 150;
+float DPI = 128;
 
 // CALCULATED CONSTANTS
 int PIXEL_COUNT = GRID_WIDTH * GRID_HEIGHT;
@@ -70,7 +70,7 @@ void initBuffer() {
 
   for (int y=0; y<GRID_HEIGHT; y++) {
     for (int x=0; x<GRID_WIDTH; x++) {
-      FRAME_BUFFER[y][x] = 255;
+      FRAME_BUFFER[y][x] = 0;
     }
   }
 
@@ -264,7 +264,7 @@ void drawPixels() {
     for (int x=0; x<GRID_WIDTH; x++) {
       int pixel = FRAME_BUFFER[y][x];
       noStroke();
-      fill(250,247,57,255-pixel);
+      fill(250,247,57,pixel);
       rect(GRID_LEFT+x*TONGUE_PIXEL_SPACING,GRID_TOP+y*TONGUE_PIXEL_SPACING,TONGUE_PIXEL_SIZE,TONGUE_PIXEL_SIZE);
 
       pixel = INPUT_BUFFER[y][x];
@@ -278,6 +278,10 @@ void sendFrame() {
 
   //  println("HOST: Start Frame");
 
+  println("x=0,y=0 = " + FRAME_BUFFER[0][0]);
+  println("x=1,y=0 = " + FRAME_BUFFER[0][1]);
+  println("x=0,y=1 = " + FRAME_BUFFER[1][0]);
+  
   SERIAL.write('[');
   SERIAL.write('F');
   SERIAL.write('R');

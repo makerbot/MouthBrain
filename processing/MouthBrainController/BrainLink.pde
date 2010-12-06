@@ -35,13 +35,14 @@ class BrainLink
   void sendData()
   {
     PImage img = get();
-    img.resize(16,16);
+    if (img.width != 16 || img.height != 16) 
+      img.resize(16,16);
     img.loadPixels();
 
     //format our packet and get ready to send.
     packet.setCommand(COMMAND_SEND_FRAME);
     for (int i=0;i<img.pixels.length; i++) {
-      packet.addData(img.pixels[i]);
+      packet.addData(int(brightness(img.pixels[i])));
     }
     packet.transmit();
   }

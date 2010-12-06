@@ -1,20 +1,24 @@
 BrainLink LINK;
+int i = 0;
 
 void setup()
 {
   size(16, 16);
-  frameRate(10);
+  frameRate(1);
 
   LINK = new BrainLink(this);
+  
+  drawFrame();
 }
 
-int i = 0;
+void draw() {
+}
 
-void draw()
+void drawFrame()
 {
-  background(255);
+  background(0);
   loadPixels();
-  pixels[i] = color(0);
+  pixels[i] = color(255);
   updatePixels();
 
   i++;
@@ -22,4 +26,13 @@ void draw()
   
   LINK.sendData();
 }
+
+void mouseReleased() {
+  drawFrame();
+}
+
+void keyReleased() {
+  drawFrame();
+}
+
 
