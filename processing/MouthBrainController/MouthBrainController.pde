@@ -6,6 +6,7 @@ int SERIAL_PORT = 0;  //-1 to list ports, non-negative to choose the port.
 int SERIAL_RATE = 115200;
 int NETWORK_PORT = 6683; // M-O-U-F
 String MB_VERSION = "0001";
+float SCALE_FACTOR = 1;
 
 // DISPLAY CONFIG
 float BOARD_WIDTH_IN = 1;
@@ -214,11 +215,12 @@ void readData() {
             int y = i / GRID_HEIGHT;
             int x = i % GRID_WIDTH;
 
-            FRAME_BUFFER[y][x] = data[i];
+            FRAME_BUFFER[y][x] = 255 - int((255-data[i]) * SCALE_FACTOR);
           }
 
           if (SERIAL_PORT >= 0)
           {
+            println("CONTROLLER: Sending Frame.");
             sendFrame();
           }
         }
