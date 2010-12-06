@@ -82,7 +82,7 @@ void loop()
   }
   */
   
-  //drawFrame();
+  drawFrame();
 }
 
 void setScan()
@@ -108,26 +108,30 @@ void drawFrame()
 {
   for (int y=0; y<YDIM; y++)
   {
-    pinMode(cathodePins[y], OUTPUT);
     digitalWrite(cathodePins[y], LOW);
+    pinMode(cathodePins[y], OUTPUT);
     
     for (int x=0; x<XDIM; x++)
     {
-      if (frameBuffer[y][x] > 0)
+      if (frameBuffer[y][x] > 128)
       {
-        pinMode(anodePins[x], OUTPUT);
-        analogWrite(anodePins[x], frameBuffer[y][x]);
+        pinMode(anodePins[x], INPUT); //high impedance
+        digitalWrite(anodePins[x], LOW); //turn off pullup
+        //pinMode(anodePins[x], OUTPUT);
+        //digitalWrite(anodePins[x], LOW);
       }
       else
       {
-        digitalWrite(anodePins[x], LOW);
-        pinMode(anodePins[x], INPUT);
+        pinMode(anodePins[x], OUTPUT); //output
+        analogWrite(anodePins[x], frameBuffer[y][x]);
+        //digitalWrite(anodePins[x], HIGH); //energize electrode
       }
     }
     
 //    delayMicroseconds(100);
     
     pinMode(cathodePins[y], INPUT); //high impedance
+    //digitalWrite(cathodePins[y], HIGH);
   }
 }
 
