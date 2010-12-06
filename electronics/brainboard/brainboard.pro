@@ -2,24 +2,24 @@ EAGLE AutoRouter Statistics:
 
 Job           : /home/hoeken/Desktop/MouthBrain/electronics/brainboard/brainboard.brd
 
-Start at      : 19:06:21 (12/1/10)
-End at        : 19:06:21 (12/1/10)
-Elapsed time  : 00:00:00
+Start at      : 17:07:59 (12/5/10)
+End at        : 17:08:03 (12/5/10)
+Elapsed time  : 00:00:04
 
-Signals       :    90   RoutingGrid: 25 mil  Layers: 2
-Connections   :    86   predefined:  0 ( 0 Vias )
+Signals       :    90   RoutingGrid: 10 mil  Layers: 2
+Connections   :    90   predefined:  25 ( 0 Vias )
 
-Router memory :   69452
+Router memory :   400292
 
 Passname          :     Route Optimize1
 
-Time per pass     :  00:00:00  00:00:00
-Number of Ripups  :         0         0
-max. Level        :         0         0
-max. Total        :         0         0
+Time per pass     :  00:00:02  00:00:02
+Number of Ripups  :         1         0
+max. Level        :         1         0
+max. Total        :         1         0
 
-Routed            :        86        86
-Vias              :        13         9
+Routed            :        65        65
+Vias              :         7         6
 Resolution        :   100.0 %   100.0 %
 
 Final             : 100.0% finished
