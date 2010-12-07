@@ -29,6 +29,9 @@ void setup()
 
   reset();
   //selftest();
+  
+  //todo: look into setting PUD in MCUCR to disable pullups across the board
+  //todo: determine minimum detectable pulse, and if pulse length relates to strength.
 }
 
 void reset()
@@ -113,11 +116,14 @@ void drawFrame()
 {
   // For each row
   for (int y=0; y<YDIM; y++)
-  {
+  {  
     // For each column
     for (int x=0; x<XDIM; x++)
     {
-        // Turn the row off
+    	// ROW ACTIVE: Output mode, LOW
+    	// ROW INACTIVE: High impedance
+        // Turn the row on
+        
         digitalWrite(cathodePins[y], LOW);
         pinMode(cathodePins[y], OUTPUT);
         
