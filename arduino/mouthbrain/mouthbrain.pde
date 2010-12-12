@@ -5,9 +5,28 @@
 byte anodePins[XDIM] = {
   17, 16, 15, 14,  2,  3,  4,  5,  6,  7,  8,  9, 10, 11, 12, 13
 };
+
+17 - PH0 - RX2
+16 - PH1 - TX2
+15 - PJ0 - RX3
+14 - PJ1 - TX3
+02 - PE4
+03 - PE5
+04 - PG5
+05 - PE3
+06 - PH3
+07 - PH4
+08 - PH5
+09 - PH6
+10 - PB4
+11 - PB5
+12 - PB6
+13 - PB7
+
 byte analogPins[XDIM] = {
   15, 14, 13, 12, 11, 10,  9,  8,  7,  6,  5,  4,  3,  2,  1,  0
 };
+
 byte cathodePins[YDIM] = {
   52, 50, 48, 46, 44, 42, 40, 38, 36, 34, 32, 30, 28, 26, 24, 22
 };
@@ -30,8 +49,11 @@ void setup()
   reset();
   //selftest();
   
-  //todo: look into setting PUD in MCUCR to disable pullups across the board
   //todo: determine minimum detectable pulse, and if pulse length relates to strength.
+
+  //todo: look into setting PUD in MCUCR to disable pullups across the board
+  //this should do the trick.
+  bitSet(MCUCR, 4);
 }
 
 void reset()
@@ -116,7 +138,24 @@ void drawFrame()
 {
   // For each row
   for (int y=0; y<YDIM; y++)
-  {  
+  {
+  	//NEW PLAN:
+  	//STEP 1: create port variables for output pins that are set properly
+  	//STEP 2: write anode ports
+  	//STEP 3: enable cathode pin
+  	//STEP 4: delay appropriate amount of time
+  	//STEP 5: tristate anode ports
+  	//STEP 6: tristate cathose pin
+  
+/*
+	//OLD CODE
+	//STEP 1: enable cathode pin
+	//STEP 2: enable anodes
+	//STEP 3: delay appropriate amount of time
+	//STEP 4: tristate cathode
+	//STEP 5: all anodes to low
+	//STEP 6: all anodes to tristate
+	
     // For each column
     for (int x=0; x<XDIM; x++)
     {
@@ -152,6 +191,9 @@ void drawFrame()
         pinMode(anodePins[x], INPUT); //high impedance
 
     }
+// END OLD CODE
+*/
+
   }
 }
 
