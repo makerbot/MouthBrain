@@ -149,12 +149,12 @@ void drawFrame()
   
 /*
 	//OLD CODE
-	//STEP 1: enable cathode pin
-	//STEP 2: enable anodes
-	//STEP 3: delay appropriate amount of time
-	//STEP 4: tristate cathode
-	//STEP 5: all anodes to low
-	//STEP 6: all anodes to tristate
+	//STEP 1: enable cathode pin (hiz => low)
+	//STEP 2: enable anodes (hiz => high)
+	//STEP 3: delay appropriate amount of time (delay...)
+	//STEP 4: tristate cathode (low => hiz)
+	//STEP 5: all anodes to low (any -> low)
+	//STEP 6: all anodes to tristate (any -> tristate)
 	
     // For each column
     for (int x=0; x<XDIM; x++)
