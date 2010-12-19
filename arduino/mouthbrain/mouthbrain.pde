@@ -177,19 +177,19 @@ void drawFrame()
         digitalWrite(anodePins[x], LOW); //turn off pullup
       }
 
-      //delayMicroseconds(10);
+      delayMicroseconds(5);
     }
     
     // For each column
     for (int x=0; x<XDIM; x++)
     {
+      delayMicroseconds(5);
+
       digitalWrite(anodePins[x], LOW); //go low
       pinMode(anodePins[x], INPUT); //high impedance
-      // END OLD CODE
     }
     pinMode(cathodePins[y], INPUT); //high impedance
     //digitalWrite(cathodePins[y], HIGH); //debug purposes only!!!
-
   }
 }
 
