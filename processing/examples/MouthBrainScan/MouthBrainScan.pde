@@ -12,6 +12,7 @@ void setup()
 }
 
 void draw() {
+  drawFrame();
 }
 
 void drawFrame()
