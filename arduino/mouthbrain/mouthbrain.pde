@@ -60,11 +60,11 @@ void setup()
 
 void reset()
 {
-  //set our anode pins high.
+  //set our anode pins high impedance, high state
   for (byte i=0; i<XDIM; i++)
   {
     pinMode(anodePins[i], INPUT);
-    digitalWrite(i, LOW);
+    digitalWrite(i, HIGH);
   }
 
   //set our cathode pins high impedance.
@@ -152,15 +152,15 @@ void drawFrame()
     //STEP 5: all anodes to low (any -> low)
     //STEP 6: all anodes to tristate (any -> tristate)
 
+    // ROW ACTIVE: Output mode, LOW
+    // ROW INACTIVE: High impedance
+    // Turn the row on
+    digitalWrite(cathodePins[y], LOW);
+    pinMode(cathodePins[y], OUTPUT);
+
     // For each column
     for (int x=0; x<XDIM; x++)
     {
-      // ROW ACTIVE: Output mode, LOW
-      // ROW INACTIVE: High impedance
-      // Turn the row on
-
-      digitalWrite(cathodePins[y], LOW);
-      pinMode(cathodePins[y], OUTPUT);
 
       // If we have some data
       if (frameBuffer[y][x] > 0)
@@ -177,15 +177,19 @@ void drawFrame()
         digitalWrite(anodePins[x], LOW); //turn off pullup
       }
 
-      delayMicroseconds(10);
-
-      pinMode(cathodePins[y], INPUT); //high impedance
-      //digitalWrite(cathodePins[y], HIGH); //debug purposes only!!!
-
+      //delayMicroseconds(10);
+    }
+    
+    // For each column
+    for (int x=0; x<XDIM; x++)
+    {
       digitalWrite(anodePins[x], LOW); //go low
       pinMode(anodePins[x], INPUT); //high impedance
+      // END OLD CODE
     }
-    // END OLD CODE
+    pinMode(cathodePins[y], INPUT); //high impedance
+    //digitalWrite(cathodePins[y], HIGH); //debug purposes only!!!
+
   }
 }
 
@@ -325,6 +329,9 @@ void frameIn()
     }
   }
 }
+
+
+
 
 
 

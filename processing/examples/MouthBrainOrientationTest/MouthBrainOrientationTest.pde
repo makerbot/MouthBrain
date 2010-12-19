@@ -18,17 +18,14 @@ void draw() {
 
 void drawFrame() {
   background(0);
-  fill(255);  
-
+  fill(255);
+  noStroke();
 /*  
   x = (frameCount % 2) * 8;
-  y = ((frameCount/2) % 2) * 8;
+   y = ((frameCount/2) % 2) * 8;
   rect(x,y,8,8);
 */
 
-  n++;
-  x = n % 4;
-  
   if (x == 0)
     rect(0,0,16,4);
   else if (x == 1)
@@ -38,8 +35,11 @@ void drawFrame() {
   else
     rect(0,0,4,16); 
 
-
   link.sendData();
+
+  n++;
+  x = n % 4;
+
 }
 
 void keyReleased() {
