@@ -1,48 +1,83 @@
+import ddf.minim.*;
+import ddf.minim.signals.*;
+import ddf.minim.analysis.*;
+import ddf.minim.effects.*;
+
 BrainLink link;
+Minim minim;
+AudioSample yes;
+AudioSample no;
 
 void setup() {
   size(16,16);
   frameRate(5);
   
+  minim = new Minim(this);
+  yes = minim.loadSample("bityes.wav");
+  no = minim.loadSample("bitno.wav");
+  
   link = new BrainLink(this);
-  n=0;
+  direction = int(random(4));
   drawFrame();
 }
 
-int n;
-int x;
-int y;
+int direction;
 
 void draw() {
 }
 
+void drawBlank() {
+  background(0);
+  link.sendData();
+  delay(3000);
+}
+
 void drawFrame() {
+  int n = direction;
+  while (n == direction) 
+    direction = int(random(4));
+
   background(0);
   fill(255);
   noStroke();
-/*  
-  x = (frameCount % 2) * 8;
-   y = ((frameCount/2) % 2) * 8;
-  rect(x,y,8,8);
-*/
 
-  if (x == 0)
+println(direction);
+  if (direction == 0) // UP
     rect(0,0,16,4);
-  else if (x == 1)
+  else if (direction == 1) // RIGHT
     rect(12,0,4,16);
-  else if (x == 2)
+  else if (direction == 2) // DOWN
     rect(0,12,16,4);
   else
-    rect(0,0,4,16); 
+    rect(0,0,4,16); // LEFT
 
   link.sendData();
 
-  n++;
-  x = n % 4;
-
+  //n++;
+  //x = n % 4;
 }
 
 void keyReleased() {
+  println("keyCode="+keyCode+" direction="+direction);
+  boolean success = (keyCode == UP && direction == 0) ||
+    (keyCode == RIGHT && direction == 1) ||
+    (keyCode == DOWN && direction == 2) ||
+    (keyCode == LEFT && direction == 3);
+    
+  if (success) {
+    yes.trigger();
+  }
+  else {
+    no.trigger();
+  }
+  
+  drawBlank();
   drawFrame();
+}
+
+void stop() {
+   yes.close();
+   no.close();
+   minim.stop();
 }
 
