@@ -55,7 +55,7 @@ void setup() {
   size(WINDOW_WIDTH, WINDOW_HEIGHT);
   background(0);
 
-  frameRate(60);
+  frameRate(10);
 
   initBuffer();
   initComms();

@@ -6,6 +6,7 @@ byte anodePins[XDIM] = {
   17, 16, 15, 14,  2,  3,  4,  5,  6,  7,  8,  9, 10, 11, 12, 13
 };
 
+/*
 17 - PH0 - RX2
 16 - PH1 - TX2
 15 - PJ0 - RX3
@@ -22,6 +23,7 @@ byte anodePins[XDIM] = {
 11 - PB5
 12 - PB6
 13 - PB7
+*/
 
 byte analogPins[XDIM] = {
   15, 14, 13, 12, 11, 10,  9,  8,  7,  6,  5,  4,  3,  2,  1,  0
@@ -100,17 +102,12 @@ int lastTime = 0;
 void loop()
 {
   frameIn();
-  //frameOut();
   
-//  delay(250);
-  
-  /*  
-  if (millis()-lastTime > 10)
+  if (millis()-lastTime > 500)
   {
-    setScan();
+    frameOut();
     lastTime = millis();
   }
-  */
   
   drawFrame();
 }
