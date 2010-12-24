@@ -22,6 +22,8 @@ void setup() {
 }
 
 int direction;
+int myScore = 0;
+int myTotal = 0;
 
 void draw() {
 }
@@ -29,7 +31,6 @@ void draw() {
 void drawBlank() {
   background(0);
   link.sendData();
-  delay(3000);
 }
 
 void drawFrame() {
@@ -64,12 +65,19 @@ void keyReleased() {
     (keyCode == DOWN && direction == 2) ||
     (keyCode == LEFT && direction == 3);
     
+  myTotal++;
+  
   if (success) {
     yes.trigger();
-  }
+    println("SUCCESS");
+    myScore++;
+  } 
   else {
     no.trigger();
+    println("FAILURE");
   }
+  
+  link.sendMessage("Score: " + myScore + "/" + myTotal + "(" + (((float)myScore/myTotal)*100) + ")");
   
   drawBlank();
   drawFrame();

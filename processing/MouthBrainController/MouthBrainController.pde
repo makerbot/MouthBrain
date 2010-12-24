@@ -51,9 +51,17 @@ int inputBufferIndex;
 boolean inputBufferSync;
 String inputBufferSyncWord = "[FRAME]";
 
+// MESSAGE OUTPUT
+String myMessage = "";
+PFont messageFont;
+
 void setup() {
   size(WINDOW_WIDTH, WINDOW_HEIGHT);
   background(0);
+  
+  messageFont = loadFont("Monospaced.plain-14.vlw");
+  textFont(messageFont);
+  
 
   frameRate(10);
 
@@ -228,6 +236,10 @@ void readData() {
           println("SERVER: Frame byte count doesn't match grid size.");
         }
       }
+      else if (command == COMMAND_SEND_MESSAGE) {
+        myMessage = PACKET.getStringPayload();
+        println("SERVER: Received message: " + myMessage);
+      }
       else {
         println("SERVER: Unknown command #" + command);
       }
@@ -248,14 +260,15 @@ void drawFrame() {
 
   /*
   for (int y=0; y<GRID_HEIGHT; y++) {
-    for (int x=0; x<GRID_WIDTH; x++) {
-      INPUT_BUFFER[y][x] = (int)(random(0, 255));
-    }
-  }
-  */
+   for (int x=0; x<GRID_WIDTH; x++) {
+   INPUT_BUFFER[y][x] = (int)(random(0, 255));
+   }
+   }
+   */
 
   drawTongue();
   drawBoard();
+  drawMessage();
   drawPixels();
 }
 
@@ -274,6 +287,12 @@ void drawPixels() {
   }
 }
 
+void drawMessage()
+{
+   fill(255);
+ text(myMessage, 10, 20);
+}
+
 void sendFrame() {
 
   //  println("HOST: Start Frame");
@@ -281,7 +300,7 @@ void sendFrame() {
   println("x=0,y=0 = " + FRAME_BUFFER[0][0]);
   println("x=1,y=0 = " + FRAME_BUFFER[0][1]);
   println("x=0,y=1 = " + FRAME_BUFFER[1][0]);
-  
+
   SERIAL.write('[');
   SERIAL.write('F');
   SERIAL.write('R');

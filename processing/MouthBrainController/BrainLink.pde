@@ -8,6 +8,7 @@ int COMMAND_SEND_FRAME   = 5;
 int COMMAND_SEND_VERSION = 6;
 int COMMAND_SEND_CONFIG  = 7;
 int COMMAND_SEND_INPUTS  = 8;
+int COMMAND_SEND_MESSAGE  = 9;
 
 class BrainLink
 {
@@ -44,6 +45,14 @@ class BrainLink
     for (int i=0;i<img.pixels.length; i++) {
       packet.addData(int(brightness(img.pixels[i])));
     }
+    packet.transmit();
+  }
+  
+  void sendMessage(String s)
+  {
+    //format our packet and get ready to send.
+    packet.setCommand(COMMAND_SEND_MESSAGE);
+    packet.addData(s);
     packet.transmit();
   }
 
@@ -92,10 +101,7 @@ class BrainLink
         println("ERROR: Frame byte count doesn't match grid size.");
       }
     }
-    else {
-      println("ERROR: Unknown command #" + command);
-    }
-
+    
     return gridIn;
   }
 }
@@ -328,6 +334,18 @@ class TastePacket
   int[] getPayload ()
   {
     return subset(buffer, 0, bufferIndex);
+  }
+  
+  String getStringPayload ()
+  {
+     String s = "";
+     
+     for (int i=0; i<bufferIndex; i++)
+     {
+        s += (char)buffer[i]; 
+     }
+     
+     return s;
   }
 }
 
