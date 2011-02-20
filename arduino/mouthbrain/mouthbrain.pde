@@ -103,11 +103,13 @@ void loop()
 {
   frameIn();
 
+  /*
   if (millis()-lastTime > 500)
   {
-    //frameOut();
+    frameOut();
     lastTime = millis();
   }
+  */
 
   drawFrame();
 }
@@ -323,7 +325,7 @@ void frameIn()
         noData++;
         delay(1);
 
-        if (noData == 1000)
+        if (noData == 2)
           return;
       }
     }
