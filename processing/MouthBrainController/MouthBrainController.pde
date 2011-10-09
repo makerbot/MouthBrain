@@ -62,8 +62,7 @@ void setup() {
   messageFont = loadFont("Monospaced.plain-14.vlw");
   textFont(messageFont);
   
-
-  frameRate(10);
+  frameRate(60);
 
   initBuffer();
   initComms();
@@ -245,6 +244,8 @@ void readData() {
       }
 
       PACKET.reset();
+      
+      return;
     }
     else
     {
