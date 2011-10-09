@@ -101,11 +101,11 @@ int lastTime = 0;
 
 void loop()
 {
-  frameIn();
+//  frameIn();
 
   if (millis()-lastTime > 500)
   {
-    //frameOut();
+    frameOut();
     lastTime = millis();
   }
 
